@@ -43,6 +43,21 @@ const projetos = ref([
     descricao: "Jogo inspirado no Pacman. Feito pelo Adriano Emanuel",
     link: "https://pacmanadrianoemanuel.vercel.app/"
   },
+    {
+    nome: "Adventure World",
+    descricao: "Jogo de aventura e plataforma. Feito pelo Benjamin Climaco",
+    link: "https://adventure-world-pi.vercel.app/"
+  },
+   {
+    nome: "Tetella Stella",
+    descricao: "Jogo de desviar de obstáculos. Feito pela Ellen",
+    link: "https://tetella-stella.vercel.app/"
+  },
+ {
+    nome: "Bichinho Virtual",
+    descricao: "Jogo de cuidar. Feito pela Elisa",
+    link: "https://bichinhovirtualelisa.vercel.app/"
+  },
 
 ])
 </script>
