@@ -58,6 +58,16 @@ const projetos = ref([
     descricao: "Jogo de cuidar. Feito pela Elisa",
     link: "https://bichinhovirtualelisa.vercel.app/"
   },
+   {
+    nome: "Desafio Dos Pinguins",
+    descricao: "Jogo de plataforma. Feito pelo Hyarley",
+    link: "https://desafio-dos-pinguins.vercel.app/"
+  },
+    {
+    nome: "Jogo de Nave",
+    descricao: "Jogo de nave. Feito pelo João Pedro",
+    link: "https://jogo-de-nave-dun.vercel.app/"
+  },
 
 ])
 </script>
