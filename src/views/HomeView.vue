@@ -6,6 +6,7 @@ const router = useRouter()
 
 const projetos = ref([
   {
+    imagem: "antonio.png",
     id: 1,
     nome: "Jogo do Antonio Roberto",
     descricao: "Jogo de plataforma. Feito pelo Antonio Roberto",
@@ -13,6 +14,7 @@ const projetos = ref([
     categoria: "Plataforma"
   },
   {
+    imagem: "cap.png",
     id: 2,
     nome: "Capiblox",
     descricao: "Jogo de Plataforma. Feito pelo Murilo Rubem",
@@ -20,6 +22,7 @@ const projetos = ref([
     categoria: "Plataforma"
   },
   {
+    imagem: "proto.png",
     id: 3,
     nome: "ProtoSpacial",
     descricao: "Jogo de nave espacial. Feito pelo Murilo Rubem",
@@ -27,6 +30,7 @@ const projetos = ref([
     categoria: "Nave Espacial"
   },
   {
+    imagem: "aviao.png",
     id: 4,
     nome: "Airplanes & Goblins Crash!",
     descricao: "Jogo de atirar. Feito pelo Guilherme Samoel",
@@ -34,6 +38,7 @@ const projetos = ref([
     categoria: "Atirar"
   },
   {
+    imagem: "dino.png",
     id: 5,
     nome: "Dino do Google",
     descricao: "Jogo inspirado no dinossauro do google. Feito pelo Kaleo",
@@ -41,6 +46,7 @@ const projetos = ref([
     categoria: "Casual"
   },
   {
+    imagem: "marco.png",
     id: 6,
     nome: "Cópia do Mario",
     descricao: "Jogo  de plataforma. Feito pelo Marcos",
@@ -48,6 +54,7 @@ const projetos = ref([
     categoria: "Plataforma"
   },
   {
+    imagem: "clone.png",
     id: 7,
     nome: "Mario Clone",
     descricao: "Jogo  de plataforma. Feito pelo Vinicius Lucca",
@@ -55,6 +62,7 @@ const projetos = ref([
     categoria: "Plataforma"
   },
   {
+    imagem: "pac.png",
     id: 8,
     nome: "Pacman",
     descricao: "Jogo inspirado no Pacman. Feito pelo Adriano Emanuel",
@@ -62,6 +70,7 @@ const projetos = ref([
     categoria: "Casual"
   },
   {
+    imagem: "world.png",
     id: 9,
     nome: "Adventure World",
     descricao: "Jogo de aventura e plataforma. Feito pelo Benjamin Climaco",
@@ -69,6 +78,7 @@ const projetos = ref([
     categoria: "Plataforma"
   },
   {
+    imagem: "tela.png",
     id: 10,
     nome: "Tetella Stella",
     descricao: "Jogo de desviar de obstáculos. Feito pela Ellen",
@@ -76,6 +86,7 @@ const projetos = ref([
     categoria: "Casual"
   },
   {
+    imagem: "gato.png",
     id: 11,
     nome: "Bichinho Virtual",
     descricao: "Jogo de cuidar. Feito pela Elisa",
@@ -83,6 +94,7 @@ const projetos = ref([
     categoria: "Casual"
   },
   {
+    imagem: "desafios.png",
     id: 12,
     nome: "Desafio Dos Pinguins",
     descricao: "Jogo de plataforma. Feito pelo Hyarley",
@@ -90,6 +102,7 @@ const projetos = ref([
     categoria: "Plataforma"
   },
   {
+    imagem: "nave.png",
     id: 13,
     nome: "Jogo de Nave",
     descricao: "Jogo de nave. Feito pelo João Pedro",
@@ -123,19 +136,23 @@ const projetosFiltrados = computed(() => {
 const irParaJogo = (id) => {
   router.push(`/GameView/${id}`)
 }
+
+const getImageUrl = (filename) => {
+  return new URL(`../assets/${filename}`, import.meta.url).href
+}
 </script>
 
 <template>
   <header>
     <div class="header-left">
-      <img src="@/assets/Jumper_branca.png" alt="">
+      <img :src="getImageUrl('Jumper_branca.png')" alt="">
     </div>
     <div class="header-right">
       <input v-model="pesquisa" type="text" placeholder="Pesquisar..." />
     </div>
   </header>
   <div class="container">
-    <h1>🎮 Projetos dos Alunos</h1>
+    <h1 class="titulo">🎮 Projetos dos Alunos</h1>
     <p class="subtitle">Confira os jogos desenvolvidos pelos alunos do curso de Desenvolvimento de Jogos 2D, da Jumper Joinville. Para jogar, é necessário ter um computador, pois os controles são feitos com o teclado.</p>
 
     <div class="filtro">
@@ -149,7 +166,8 @@ const irParaJogo = (id) => {
 
     <div class="grid">
       <div class="card" v-for="projeto in projetosFiltrados" :key="projeto.id" @click="irParaJogo(projeto.id)">
-        <h2>{{ projeto.nome }}</h2>
+        <img :src="getImageUrl(projeto.imagem)" :alt="projeto.nome" />
+        <h2 >{{ projeto.nome }}</h2>
         <p>{{ projeto.descricao }}</p>
         <p><strong>Categoria:</strong> {{ projeto.categoria }}</p>
         <a :href="projeto.link" target="_blank" @click.stop>Jogar 🎮</a>
@@ -176,7 +194,10 @@ header {
   gap: 20px;
   font-size: 13px;
 }
-
+.titulo {
+  color: #22c55e;
+  margin-bottom: 10px;
+}
 .header-left,
 .header-right {
   display: flex;
@@ -200,7 +221,11 @@ header input {
 header input::placeholder {
   color: #94a3b8;
 }
-
+header input:focus {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
+}
 body {
   margin: 0;
   background: #0f172a;
@@ -235,7 +260,7 @@ body {
   border-radius: 10px;
   border: 1px solid #334155;
   background: #0f172a;
-  color: white;
+  color: #22c55e;
 }
 
 .grid {
@@ -256,6 +281,14 @@ footer {
   border-radius: 12px;
   transition: 0.3s;
   cursor: pointer;
+}
+
+.card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 .card:hover {
