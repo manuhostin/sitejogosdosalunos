@@ -110,6 +110,30 @@ const projetos = [
     categoria: "Nave Espacial",
     Instrucoes: "Use as setas do teclado para se mover. Clique no mouse para atirar. Destrua os inimigos e sobreviva o máximo possível."
   },
+  {
+    imagem: "Kaio.png",
+    id: 14,
+    nome: "Jogo do Kaio",
+    descricao: "Jogo de plataforma. Feito pelo Kaio",
+    link: "https://jogo-do-kaio.vercel.app/",
+    categoria: "Plataforma"
+  },
+  {
+    imagem: "navesx.png",
+    id: 15,
+    nome: "Naves X",
+    descricao: "Jogo de nave. Feito pelo Lorenzo",
+    link: "https://naves-x.vercel.app/",
+    categoria: "Nave Espacial"
+  },
+  {
+    imagem: "Monster Apocalipse.png",
+    id: 16,
+    nome: "Monster Apocalipse",
+    descricao: "Jogo de ação. Feito pelo Theo",
+    link: "https://monster-apocalipse.vercel.app/",
+    categoria: "Plataforma"
+  }
 ]
 
 const jogo = computed(() => {
