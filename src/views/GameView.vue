@@ -110,6 +110,43 @@ const projetos = [
     categoria: "Nave Espacial",
     Instrucoes: "Use as setas do teclado para se mover. Clique no mouse para atirar. Destrua os inimigos e sobreviva o máximo possível."
   },
+  {
+    imagem: "Kaio.png",
+    id: 14,
+    nome: "Jogo do Kaio",
+    descricao: "Jogo de plataforma. Feito pelo Kaio",
+    link: "https://jogo-do-kaio.vercel.app/",
+    categoria: "Plataforma",
+    Instrucoes: "Use as setas do teclado para se mover e pular. Colete os itens e evite os inimigos."
+  },
+  {
+    imagem: "navesx.png",
+    id: 15,
+    nome: "Naves X",
+    descricao: "Jogo de nave. Feito pelo Lorenzo",
+    link: "https://naves-x.vercel.app/",
+    categoria: "Nave Espacial",
+    Instrucoes: "Use as setas do teclado para se mover. Clique no mouse para atirar. Destrua os inimigos e sobreviva o máximo possível."
+  },
+  {
+    imagem: "Monster Apocalipse.png",
+    id: 16,
+    nome: "Monster Apocalipse",
+    descricao: "Jogo de ação. Feito pelo Theo",
+    link: "https://monster-apocalipse.vercel.app/",
+    categoria: "Plataforma",
+    Instrucoes: "Use as setas do teclado para se mover e pular. Pressione espaço para atacar os monstros com a espada."
+  },
+   {
+    imagem: "lucas.png",
+    id: 17,
+    nome: "Sua Carreira no Futebol em Labirinto",
+    descricao: "Jogo de plataforma. Feito pelo Lucas",
+    link: "https://sua-carreira-no-futebol-em-labirint.vercel.app/",
+    categoria: "Plataforma",
+    Instrucoes: "Use as setas do teclado para se mover e pular. Colete os itens para passar de fase"
+  }
+
 ]
 
 const jogo = computed(() => {
@@ -159,7 +196,7 @@ const voltar = () => {
   font-family: 'Poppins', sans-serif;
 }
 iframe {
-    border: none; /* Remove a borda padrão */
+    border: none;
     border-radius: 8px; /* Cantos arredondados */
     box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra suave */
     overflow: hidden; /* Esconde conteúdo extra */

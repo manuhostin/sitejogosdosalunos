@@ -90,7 +90,7 @@ const projetos = ref([
     id: 11,
     nome: "Bichinho Virtual",
     descricao: "Jogo de cuidar. Feito pela Elisa",
-    link: "https://bichinhovirtualelisa.vercel.app/",
+    link: "https://bichinhovirtual.vercel.app/",
     categoria: "Casual"
   },
   {
@@ -109,6 +109,40 @@ const projetos = ref([
     link: "https://jogo-de-nave-dun.vercel.app/",
     categoria: "Nave Espacial"
   },
+  {
+    imagem: "Kaio.png",
+    id: 14,
+    nome: "Jogo do Kaio",
+    descricao: "Jogo de plataforma. Feito pelo Kaio",
+    link: "https://jogo-do-kaio.vercel.app/",
+    categoria: "Plataforma"
+  },
+  {
+    imagem: "navesx.png",
+    id: 15,
+    nome: "Naves X",
+    descricao: "Jogo de nave. Feito pelo Lorenzo",
+    link: "https://naves-x.vercel.app/",
+    categoria: "Nave Espacial"
+  },
+  {
+    imagem: "Monster Apocalipse.png",
+    id: 16,
+    nome: "Monster Apocalipse",
+    descricao: "Jogo de ação. Feito pelo Theo",
+    link: "https://monster-apocalipse.vercel.app/",
+    categoria: "Plataforma"
+  },
+  {
+    imagem: "lucas.png",
+    id: 17,
+    nome: "Sua Carreira no Futebol em Labirinto",
+    descricao: "Jogo de plataforma. Feito pelo Lucas",
+    link: "https://sua-carreira-no-futebol-em-labirint.vercel.app/",
+    categoria: "Plataforma"
+  }
+
+
 ])
 
 const categoriaSelecionada = ref('Todas')
