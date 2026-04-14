@@ -132,6 +132,14 @@ const projetos = ref([
     descricao: "Jogo de ação. Feito pelo Theo",
     link: "https://monster-apocalipse.vercel.app/",
     categoria: "Plataforma"
+  },
+  {
+    imagem: "lucas.png",
+    id: 17,
+    nome: "Sua Carreira no Futebol em Labirinto",
+    descricao: "Jogo de plataforma. Feito pelo Lucas",
+    link: "https://sua-carreira-no-futebol-em-labirint.vercel.app/",
+    categoria: "Plataforma"
   }
 
 
