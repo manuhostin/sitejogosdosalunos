@@ -66,7 +66,7 @@ const projetos = ref([
     id: 8,
     nome: "Pacman",
     descricao: "Jogo inspirado no Pacman. Feito pelo Adriano Emanuel",
-    link: "https://pacmanadrianoemanuel.vercel.app/",
+    link: "https://pacmanadriano.vercel.app/",
     categoria: "Casual"
   },
   {
