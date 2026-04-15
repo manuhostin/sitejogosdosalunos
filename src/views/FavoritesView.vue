@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, inject } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -66,7 +66,7 @@ const projetos = ref([
     id: 8,
     nome: "Pacman",
     descricao: "Jogo inspirado no Pacman. Feito pelo Adriano Emanuel",
-    link: "https://pacmanadrianoemanuel.vercel.app/",
+    link: "https://pacmanadriano.vercel.app/",
     categoria: "Casual"
   },
   {
@@ -141,30 +141,19 @@ const projetos = ref([
     link: "https://sua-carreira-no-futebol-em-labirint.vercel.app/",
     categoria: "Plataforma"
   }
-
-
 ])
 
-const categoriaSelecionada = ref('Todas')
-const pesquisa = inject('pesquisa')
+const favoritos = ref([])
 
-const categorias = computed(() => {
-  const opciones = projetos.value.map((p) => p.categoria)
-  return ['Todas', ...Array.from(new Set(opciones))]
+onMounted(() => {
+  const stored = localStorage.getItem('favoritos')
+  if (stored) {
+    favoritos.value = JSON.parse(stored)
+  }
 })
 
-const projetosFiltrados = computed(() => {
-  const termo = pesquisa.value.trim().toLowerCase()
-
-  return projetos.value.filter((projeto) => {
-    const matchesCategoria = categoriaSelecionada.value === 'Todas' || projeto.categoria === categoriaSelecionada.value
-    const matchesPesquisa =
-      !termo ||
-      [projeto.nome, projeto.descricao, projeto.categoria]
-        .some((campo) => campo.toLowerCase().includes(termo))
-
-    return matchesCategoria && matchesPesquisa
-  })
+const projetosFavoritos = computed(() => {
+  return projetos.value.filter(projeto => favoritos.value.includes(projeto.id))
 })
 
 const irParaJogo = (id) => {
@@ -178,27 +167,19 @@ const getImageUrl = (filename) => {
 
 <template>
   <div class="container">
-    <h1 class="titulo">🎮 Projetos dos Alunos</h1>
-    <p class="subtitle">Confira os jogos desenvolvidos pelos alunos do curso de Desenvolvimento de Jogos 2D, da Jumper Joinville. Para jogar, é necessário ter um computador, pois os controles são feitos com o teclado.</p>
+    <h1 class="titulo">❤️ Favoritos</h1>
+    <p class="subtitle">Seus projetos favoritos.</p>
 
-    <div class="filtro">
-      <label for="categoria">Filtrar por categoria:</label>
-      <select id="categoria" v-model="categoriaSelecionada">
-        <option v-for="categoria in categorias" :key="categoria" :value="categoria">
-          {{ categoria }}
-        </option>
-      </select>
-    </div>
-
-    <div class="grid">
-      <div class="card" v-for="projeto in projetosFiltrados" :key="projeto.id" @click="irParaJogo(projeto.id)">
+    <div class="grid" v-if="projetosFavoritos.length > 0">
+      <div class="card" v-for="projeto in projetosFavoritos" :key="projeto.id" @click="irParaJogo(projeto.id)">
         <img :src="getImageUrl(projeto.imagem)" :alt="projeto.nome" />
-        <h2 >{{ projeto.nome }}</h2>
+        <h2>{{ projeto.nome }}</h2>
         <p>{{ projeto.descricao }}</p>
         <p><strong>Categoria:</strong> {{ projeto.categoria }}</p>
         <a :href="projeto.link" target="_blank" @click.stop>Jogar 🎮</a>
       </div>
     </div>
+    <p v-else>Você ainda não adicionou nenhum favorito. Vá para a página do jogo e clique no coração para adicionar.</p>
   </div>
   <footer>
     <p> 2026 Projetos dos Alunos. Produzido por Manu Hostim.</p>
@@ -211,47 +192,7 @@ const getImageUrl = (filename) => {
 * {
   font-family: 'Poppins', sans-serif;
 }
-header {
-  background: #1e293b;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  font-size: 13px;
-}
-.titulo {
-  color: #22c55e;
-  margin-bottom: 10px;
-}
-.header-left,
-.header-right {
-  display: flex;
-  align-items: center;
-}
 
-img {
-  height: 40px;
-}
-
-header input {
-  width: 260px;
-  max-width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: white;
-}
-
-header input::placeholder {
-  color: #94a3b8;
-}
-header input:focus {
-  outline: none;
-  border-color: #22c55e;
-  box-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
-}
 body {
   margin: 0;
   background: #0f172a;
@@ -263,30 +204,14 @@ body {
   padding: 40px;
 }
 
+.titulo {
+  color: #22c55e;
+  margin-bottom: 10px;
+}
+
 .subtitle {
   color: #94a3b8;
   margin-bottom: 30px;
-}
-
-.filtro {
-  margin-bottom: 25px;
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.filtro label {
-  font-weight: bold;
-}
-
-.filtro select {
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #334155;
-  background: #0f172a;
-  color: #22c55e;
 }
 
 .grid {
@@ -294,13 +219,7 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
 }
-footer {
-  text-align: center;
-  padding: 20px;
-  background: #1e293b;
-  color: #94a3b8;
-  margin-top: 40px;
-}
+
 .card {
   background: #1e293b;
   padding: 20px;
@@ -343,5 +262,13 @@ footer {
 
 .card a:hover {
   background: #16a34a;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #1e293b;
+  color: #94a3b8;
+  margin-top: 40px;
 }
 </style>
