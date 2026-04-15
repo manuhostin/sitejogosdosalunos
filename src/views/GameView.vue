@@ -1,9 +1,18 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
+
+const favoritos = ref([])
+
+onMounted(() => {
+  const stored = localStorage.getItem('favoritos')
+  if (stored) {
+    favoritos.value = JSON.parse(stored)
+  }
+})
 
 const projetos = [
   {
@@ -66,7 +75,7 @@ const projetos = [
     id: 8,
     nome: "Pacman",
     descricao: "Jogo inspirado no Pacman. Feito pelo Adriano Emanuel",
-    link: "https://pacmanadrianoemanuel.vercel.app/",
+    link: "https://pacmanadriano.vercel.app/",
     categoria: "Casual",
     Instrucoes: "Use as setas do teclado para se mover. Colete os pontos e evite os fantasmas."
   },
@@ -154,6 +163,22 @@ const jogo = computed(() => {
   return projetos.find(p => p.id === id)
 })
 
+const isFavorito = computed(() => {
+  const id = parseInt(route.params.id)
+  return favoritos.value.includes(id)
+})
+
+const toggleFavorito = () => {
+  const id = parseInt(route.params.id)
+  const index = favoritos.value.indexOf(id)
+  if (index > -1) {
+    favoritos.value.splice(index, 1)
+  } else {
+    favoritos.value.push(id)
+  }
+  localStorage.setItem('favoritos', JSON.stringify(favoritos.value))
+}
+
 const voltar = () => {
   router.push('/')
 }
@@ -166,6 +191,9 @@ const voltar = () => {
         <img src="@/assets/Jumper_branca.png" alt="">
       </div>
       <div class="header-right">
+        <button @click="toggleFavorito" class="favorito-btn" :class="{ active: isFavorito }">
+          ❤️ {{ isFavorito ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos' }}
+        </button>
         <button @click="voltar" class="voltar-btn">← Voltar</button>
       </div>
     </header>
@@ -240,6 +268,30 @@ img {
 
 .voltar-btn:hover {
   background: #475569;
+}
+
+.favorito-btn {
+  padding: 10px 15px;
+  background: #22c55e;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.favorito-btn:hover {
+  background: #16a34a;
+}
+
+.favorito-btn.active {
+  background: #ff6b6b;
+  color: white;
+}
+
+.favorito-btn.active:hover {
+  background: #e63946;
 }
 
 .container {
