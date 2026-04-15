@@ -42,6 +42,7 @@ const getImageUrl = (filename) => {
       <li><router-link to="/top-projetos" @click="closeMenu">Top Projetos</router-link></li>
       <li><router-link to="/" @click="closeMenu">Home</router-link></li>
       <li><router-link to="/favoritos" @click="closeMenu">Favoritos</router-link></li>
+      <li><router-link to="/recentes" @click="closeMenu">Jogados Recentemente</router-link></li>
     </ul>
   </nav>
   <router-view />

@@ -12,6 +12,14 @@ onMounted(() => {
   if (stored) {
     favoritos.value = JSON.parse(stored)
   }
+
+  // Adicionar aos recentes
+  const id = parseInt(route.params.id)
+  let recentes = JSON.parse(localStorage.getItem('recentes') || '[]')
+  recentes = recentes.filter(r => r !== id) // remover se já existe
+  recentes.unshift(id) // adicionar no início
+  recentes = recentes.slice(0, 10) // manter apenas os 10 mais recentes
+  localStorage.setItem('recentes', JSON.stringify(recentes))
 })
 
 const projetos = [
