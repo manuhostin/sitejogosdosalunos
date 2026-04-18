@@ -1,25 +1,120 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { gamesApi } from '@/services/api.js'
 
 const route = useRoute()
 const router = useRouter()
 
 const favoritos = ref([])
+const visualizacoes = ref(0)
+const curtidas = ref(0)
+const comentarios = ref([])
+const novoComentario = ref('')
+const abaAtiva = ref('visualizacoes')
+const jogoId = computed(() => parseInt(route.params.id))
+const curtido = ref(false)
 
-onMounted(() => {
+const getLikedGamesStorage = () => {
+  try {
+    return JSON.parse(localStorage.getItem('likedGames') || '[]')
+  } catch {
+    return []
+  }
+}
+
+const setLikedGamesStorage = (likedGames) => {
+  localStorage.setItem('likedGames', JSON.stringify(likedGames))
+}
+
+const loadLikedState = () => {
+  const likedGames = getLikedGamesStorage()
+  curtido.value = likedGames.includes(jogoId.value)
+}
+
+const setLikedState = (isLiked) => {
+  const likedGames = getLikedGamesStorage()
+  const index = likedGames.indexOf(jogoId.value)
+  if (isLiked && index === -1) likedGames.push(jogoId.value)
+  if (!isLiked && index > -1) likedGames.splice(index, 1)
+  setLikedGamesStorage(likedGames)
+  curtido.value = isLiked
+}
+
+const fetchJogoData = async () => {
+  try {
+    const data = await gamesApi.getGame(jogoId.value)
+    visualizacoes.value = data.statistics?.views ?? data.views ?? 0
+    curtidas.value = data.statistics?.likes ?? data.likes ?? 0
+  } catch (error) {
+    console.error('Erro ao buscar dados do jogo:', error)
+  }
+}
+
+const incrementView = async () => {
+  try {
+    await gamesApi.ensureGame(jogoId.value)
+    await gamesApi.addView(jogoId.value)
+    await fetchJogoData()
+  } catch (error) {
+    console.error('Erro ao incrementar visualização:', error)
+  }
+}
+
+const toggleLike = async () => {
+  try {
+    await gamesApi.ensureGame(jogoId.value)
+    if (curtido.value) {
+      await gamesApi.removeLike(jogoId.value)
+    } else {
+      await gamesApi.addLike(jogoId.value)
+    }
+    setLikedState(!curtido.value)
+    await fetchJogoData()
+  } catch (error) {
+    console.error('Erro ao alternar curtida:', error)
+  }
+}
+
+const fetchComentarios = async () => {
+  try {
+    const data = await gamesApi.getComments(jogoId.value)
+    comentarios.value = Array.isArray(data) ? data : (data.comments || [])
+  } catch (error) {
+    console.error('Erro ao buscar comentários:', error)
+  }
+}
+
+const addComentario = async () => {
+  if (!novoComentario.value.trim()) return
+  try {
+    await gamesApi.ensureGame(jogoId.value)
+    await gamesApi.addComment(jogoId.value, novoComentario.value.trim())
+    novoComentario.value = ''
+    await fetchComentarios()
+  } catch (error) {
+    console.error('Erro ao adicionar comentário:', error)
+  }
+}
+
+onMounted(async () => {
   const stored = localStorage.getItem('favoritos')
   if (stored) {
     favoritos.value = JSON.parse(stored)
   }
 
   // Adicionar aos recentes
-  const id = parseInt(route.params.id)
   let recentes = JSON.parse(localStorage.getItem('recentes') || '[]')
-  recentes = recentes.filter(r => r !== id) // remover se já existe
-  recentes.unshift(id) // adicionar no início
-  recentes = recentes.slice(0, 10) // manter apenas os 10 mais recentes
+  recentes = recentes.filter(r => r !== jogoId.value)
+  recentes.unshift(jogoId.value)
+  recentes = recentes.slice(0, 10)
   localStorage.setItem('recentes', JSON.stringify(recentes))
+
+  loadLikedState()
+  await gamesApi.ensureGame(jogoId.value)
+  await incrementView()
+  await fetchJogoData()
+  await fetchComentarios()
 })
 
 const projetos = [
@@ -177,12 +272,11 @@ const isFavorito = computed(() => {
 })
 
 const toggleFavorito = () => {
-  const id = parseInt(route.params.id)
-  const index = favoritos.value.indexOf(id)
+  const index = favoritos.value.indexOf(jogoId.value)
   if (index > -1) {
     favoritos.value.splice(index, 1)
   } else {
-    favoritos.value.push(id)
+    favoritos.value.push(jogoId.value)
   }
   localStorage.setItem('favoritos', JSON.stringify(favoritos.value))
 }
@@ -211,6 +305,32 @@ const voltar = () => {
       <p><strong>Categoria:</strong> {{ jogo.categoria }}</p>
       <iframe :src="jogo.link" width="800" height="600" frameborder="0" allowfullscreen></iframe>
       <br>
+      <div class="tabs">
+        <button @click="abaAtiva = 'visualizacoes'" :class="{ active: abaAtiva === 'visualizacoes' }">Visualizações</button>
+        <button @click="abaAtiva = 'curtidas'" :class="{ active: abaAtiva === 'curtidas' }">Curtidas</button>
+        <button @click="abaAtiva = 'comentarios'" :class="{ active: abaAtiva === 'comentarios' }">Comentários</button>
+      </div>
+      <div class="tab-content">
+        <div v-if="abaAtiva === 'visualizacoes'">
+          <p>Este jogo foi visualizado {{ visualizacoes }} vezes.</p>
+        </div>
+        <div v-if="abaAtiva === 'curtidas'">
+          <p>Curtidas: {{ curtidas }}</p>
+          <button @click="toggleLike" class="curtir-btn">{{ curtido ? 'Descurtir 👎' : 'Curtir 👍' }}</button>
+        </div>
+        <div v-if="abaAtiva === 'comentarios'">
+          <div class="comentarios">
+            <div v-for="comentario in comentarios" :key="comentario.id" class="comentario">
+              <p>{{ comentario.text }}</p>
+              <small>{{ new Date(comentario.created_at).toLocaleString() }}</small>
+            </div>
+          </div>
+          <div class="novo-comentario">
+            <textarea v-model="novoComentario" placeholder="Adicione um comentário..."></textarea>
+            <button @click="addComentario" class="comentar-btn">Comentar</button>
+          </div>
+        </div>
+      </div>
       <p><strong>Instruções:</strong> {{ jogo.Instrucoes }}</p>
       <a :href="jogo.link" target="_blank" class="jogar-btn">Jogar em tela cheia 🎮</a>
     </div>
@@ -326,6 +446,99 @@ img {
 }
 
 .jogar-btn:hover {
+  background: #16a34a;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  background: #334155;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.tabs button:hover {
+  background: #475569;
+}
+
+.tabs button.active {
+  background: #22c55e;
+  color: black;
+}
+
+.tab-content {
+  margin: 20px 0;
+  padding: 20px;
+  background: #1e293b;
+  border-radius: 8px;
+}
+
+.curtir-btn {
+  padding: 10px 20px;
+  background: #22c55e;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.curtir-btn:hover {
+  background: #16a34a;
+}
+
+.comentarios {
+  margin-bottom: 20px;
+}
+
+.comentario {
+  background: #334155;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.comentario p {
+  margin: 0;
+}
+
+.comentario small {
+  color: #94a3b8;
+}
+
+.novo-comentario textarea {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #334155;
+  color: white;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.comentar-btn {
+  padding: 10px 20px;
+  background: #22c55e;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.comentar-btn:hover {
   background: #16a34a;
 }
 
