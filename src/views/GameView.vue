@@ -15,7 +15,7 @@ const abaAtiva = ref('visualizacoes')
 const jogoId = computed(() => parseInt(route.params.id))
 const curtido = ref(false)
 
-const API_BASE = '/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 const getLikedGamesStorage = () => {
   try {
