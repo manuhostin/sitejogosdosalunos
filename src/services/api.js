@@ -50,7 +50,6 @@ export const gamesApi = {
   async removeLike(gameId) {
     return request(`/games/${gameId}/unlike/`, {
       method: 'DELETE',
-      body: JSON.stringify({}),
     })
   },
 

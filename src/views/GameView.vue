@@ -281,14 +281,6 @@ const toggleFavorito = () => {
   localStorage.setItem('favoritos', JSON.stringify(favoritos.value))
 }
 
-const toggleCurtida = async () => {
-  await toggleLike()
-}
-
-const adicionarComentario = async () => {
-  await addComentario()
-}
-
 const voltar = () => {
   router.push('/')
 }
@@ -324,7 +316,7 @@ const voltar = () => {
         </div>
         <div v-if="abaAtiva === 'curtidas'">
           <p>Curtidas: {{ curtidas }}</p>
-          <button @click="toggleCurtida" class="curtir-btn">{{ curtido ? 'Descurtir 👎' : 'Curtir 👍' }}</button>
+          <button @click="toggleLike" class="curtir-btn">{{ curtido ? 'Descurtir 👎' : 'Curtir 👍' }}</button>
         </div>
         <div v-if="abaAtiva === 'comentarios'">
           <div class="comentarios">
@@ -335,7 +327,7 @@ const voltar = () => {
           </div>
           <div class="novo-comentario">
             <textarea v-model="novoComentario" placeholder="Adicione um comentário..."></textarea>
-            <button @click="adicionarComentario" class="comentar-btn">Comentar</button>
+            <button @click="addComentario" class="comentar-btn">Comentar</button>
           </div>
         </div>
       </div>
