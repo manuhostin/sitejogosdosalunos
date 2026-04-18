@@ -151,6 +151,15 @@ export function mockApiPlugin() {
           return sendJson(res, 201, like)
         }
 
+        if (resource === 'unlike' && method === 'DELETE') {
+          if (game.likes.length > 0) {
+            game.likes.pop()
+            game.updated_at = now()
+            await saveDb(db)
+          }
+          return sendJson(res, 200, { message: 'Like removed' })
+        }
+
         if (resource === 'comments') {
           if (method === 'GET') {
             return sendJson(res, 200, {
