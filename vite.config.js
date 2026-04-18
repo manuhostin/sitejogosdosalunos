@@ -9,12 +9,13 @@ import { mockApiPlugin } from './mock-api.js'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
   const apiTarget = env.VITE_API_TARGET || 'https://sitejumperbd.onrender.com'
+  const useMock = env.VITE_USE_MOCK === 'true'
 
   return {
     plugins: [
       vue(),
       vueDevTools(),
-      mockApiPlugin(),
+      ...(useMock ? [mockApiPlugin()] : []),
     ],
     resolve: {
       alias: {
