@@ -1,12 +1,12 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { gamesApi } from '@/services/api.js'
 
 const route = useRoute()
 const router = useRouter()
 
 const favoritos = ref([])
-
 const visualizacoes = ref(0)
 const curtidas = ref(0)
 const comentarios = ref([])
@@ -14,8 +14,6 @@ const novoComentario = ref('')
 const abaAtiva = ref('visualizacoes')
 const jogoId = computed(() => parseInt(route.params.id))
 const curtido = ref(false)
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 const getLikedGamesStorage = () => {
   try {
@@ -37,53 +35,27 @@ const loadLikedState = () => {
 const setLikedState = (isLiked) => {
   const likedGames = getLikedGamesStorage()
   const index = likedGames.indexOf(jogoId.value)
-
   if (isLiked && index === -1) likedGames.push(jogoId.value)
   if (!isLiked && index > -1) likedGames.splice(index, 1)
-
   setLikedGamesStorage(likedGames)
   curtido.value = isLiked
 }
 
-// Funções de API
 const fetchJogoData = async () => {
   try {
-    const response = await fetch(`${API_BASE}/games/${jogoId.value}/`)
-    if (response.ok) {
-      const data = await response.json()
-      visualizacoes.value = data.statistics?.views ?? data.views ?? 0
-      curtidas.value = data.statistics?.likes ?? data.likes ?? 0
-    }
+    const data = await gamesApi.getGame(jogoId.value)
+    visualizacoes.value = data.statistics?.views ?? data.views ?? 0
+    curtidas.value = data.statistics?.likes ?? data.likes ?? 0
   } catch (error) {
     console.error('Erro ao buscar dados do jogo:', error)
   }
 }
 
-const createGameIfNeeded = async () => {
-  try {
-    await fetch(`${API_BASE}/games/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ game_id: jogoId.value })
-    })
-  } catch (error) {
-    console.error('Erro ao criar game no backend:', error)
-  }
-}
-
 const incrementView = async () => {
   try {
-    await createGameIfNeeded()
-    const response = await fetch(`${API_BASE}/games/${jogoId.value}/views/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
-    })
-    if (response.ok) {
-      await fetchJogoData()
-    } else {
-      console.error('Falha ao registrar visualização:', response.status, await response.text())
-    }
+    await gamesApi.ensureGame(jogoId.value)
+    await gamesApi.addView(jogoId.value)
+    await fetchJogoData()
   } catch (error) {
     console.error('Erro ao incrementar visualização:', error)
   }
@@ -91,37 +63,14 @@ const incrementView = async () => {
 
 const toggleLike = async () => {
   try {
-    await createGameIfNeeded()
-    const endpoint = curtido.value ? 'unlike' : 'like'
-    const method = curtido.value ? 'DELETE' : 'POST'
-
-    const response = await fetch(`${API_BASE}/games/${jogoId.value}/${endpoint}/`, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
-    })
-
-    if (response.ok) {
-      setLikedState(!curtido.value)
-      await fetchJogoData()
+    await gamesApi.ensureGame(jogoId.value)
+    if (curtido.value) {
+      await gamesApi.removeLike(jogoId.value)
     } else {
-      // Fallback: tenta endpoint de like antigo para manter compatibilidade
-      if (!curtido.value) {
-        const legacyResponse = await fetch(`${API_BASE}/games/${jogoId.value}/like/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        })
-
-        if (legacyResponse.ok) {
-          setLikedState(true)
-          await fetchJogoData()
-          return
-        }
-      }
-
-      console.error('Falha ao alternar curtida:', response.status, await response.text())
+      await gamesApi.addLike(jogoId.value)
     }
+    setLikedState(!curtido.value)
+    await fetchJogoData()
   } catch (error) {
     console.error('Erro ao alternar curtida:', error)
   }
@@ -129,11 +78,8 @@ const toggleLike = async () => {
 
 const fetchComentarios = async () => {
   try {
-    const response = await fetch(`${API_BASE}/games/${jogoId.value}/comments/`)
-    if (response.ok) {
-      const data = await response.json()
-      comentarios.value = Array.isArray(data) ? data : (data.comments || [])
-    }
+    const data = await gamesApi.getComments(jogoId.value)
+    comentarios.value = Array.isArray(data) ? data : (data.comments || [])
   } catch (error) {
     console.error('Erro ao buscar comentários:', error)
   }
@@ -142,18 +88,10 @@ const fetchComentarios = async () => {
 const addComentario = async () => {
   if (!novoComentario.value.trim()) return
   try {
-    await createGameIfNeeded()
-    const response = await fetch(`${API_BASE}/games/${jogoId.value}/comments/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: novoComentario.value.trim() })
-    })
-    if (response.ok) {
-      novoComentario.value = ''
-      await fetchComentarios()
-    } else {
-      console.error('Falha ao adicionar comentário:', response.status, await response.text())
-    }
+    await gamesApi.ensureGame(jogoId.value)
+    await gamesApi.addComment(jogoId.value, novoComentario.value.trim())
+    novoComentario.value = ''
+    await fetchComentarios()
   } catch (error) {
     console.error('Erro ao adicionar comentário:', error)
   }
@@ -172,9 +110,8 @@ onMounted(async () => {
   recentes = recentes.slice(0, 10)
   localStorage.setItem('recentes', JSON.stringify(recentes))
 
-  // Garantir que o game exista no backend antes de usar as estatísticas
   loadLikedState()
-  await createGameIfNeeded()
+  await gamesApi.ensureGame(jogoId.value)
   await incrementView()
   await fetchJogoData()
   await fetchComentarios()
@@ -344,14 +281,6 @@ const toggleFavorito = () => {
   localStorage.setItem('favoritos', JSON.stringify(favoritos.value))
 }
 
-const toggleCurtida = async () => {
-  await toggleLike()
-}
-
-const adicionarComentario = async () => {
-  await addComentario()
-}
-
 const voltar = () => {
   router.push('/')
 }
@@ -387,7 +316,7 @@ const voltar = () => {
         </div>
         <div v-if="abaAtiva === 'curtidas'">
           <p>Curtidas: {{ curtidas }}</p>
-          <button @click="toggleCurtida" class="curtir-btn">{{ curtido ? 'Descurtir 👎' : 'Curtir 👍' }}</button>
+          <button @click="toggleLike" class="curtir-btn">{{ curtido ? 'Descurtir 👎' : 'Curtir 👍' }}</button>
         </div>
         <div v-if="abaAtiva === 'comentarios'">
           <div class="comentarios">
@@ -398,7 +327,7 @@ const voltar = () => {
           </div>
           <div class="novo-comentario">
             <textarea v-model="novoComentario" placeholder="Adicione um comentário..."></textarea>
-            <button @click="adicionarComentario" class="comentar-btn">Comentar</button>
+            <button @click="addComentario" class="comentar-btn">Comentar</button>
           </div>
         </div>
       </div>

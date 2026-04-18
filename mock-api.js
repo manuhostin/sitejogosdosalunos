@@ -29,7 +29,7 @@ const createGame = (db, gameId) => {
       updated_at: now(),
       likes: [],
       comments: [],
-      views: []
+      views: [],
     }
     db.games.push(game)
   }
@@ -75,6 +75,7 @@ export function mockApiPlugin() {
         const method = req.method.toUpperCase()
         const db = await loadDb()
 
+        // POST /api/games/ — create/ensure game
         if (segments.length === 2 && segments[0] === 'api' && segments[1] === 'games' && method === 'POST') {
           const body = await parseJsonBody(req)
           const gameId = Number(body.game_id)
@@ -99,6 +100,7 @@ export function mockApiPlugin() {
         const game = findGame(db, gameId)
         const resource = segments[3]
 
+        // GET /api/games/:id/
         if (segments.length === 3 && method === 'GET') {
           if (!game) {
             return sendJson(res, 404, { error: 'Game not found' })
@@ -110,11 +112,12 @@ export function mockApiPlugin() {
             statistics: {
               likes: game.likes.length,
               comments: game.comments.length,
-              views: game.views.length
-            }
+              views: game.views.length,
+            },
           })
         }
 
+        // POST /api/games/:id/ — ensure game exists
         if (segments.length === 3 && method === 'POST') {
           const targetGame = createGame(db, gameId)
           targetGame.updated_at = now()
@@ -126,12 +129,13 @@ export function mockApiPlugin() {
           return sendJson(res, 404, { error: 'Game not found' })
         }
 
+        // POST /api/games/:id/views/
         if (resource === 'views' && method === 'POST') {
           const view = {
             id: game.views.length + 1,
             user_id: null,
             ip_address: '127.0.0.1',
-            created_at: now()
+            created_at: now(),
           }
           game.views.push(view)
           game.updated_at = now()
@@ -139,11 +143,12 @@ export function mockApiPlugin() {
           return sendJson(res, 201, view)
         }
 
+        // POST /api/games/:id/like/
         if (resource === 'like' && method === 'POST') {
           const like = {
             id: game.likes.length + 1,
             user_id: null,
-            created_at: now()
+            created_at: now(),
           }
           game.likes.push(like)
           game.updated_at = now()
@@ -151,6 +156,7 @@ export function mockApiPlugin() {
           return sendJson(res, 201, like)
         }
 
+        // DELETE /api/games/:id/unlike/
         if (resource === 'unlike' && method === 'DELETE') {
           if (game.likes.length > 0) {
             game.likes.pop()
@@ -160,12 +166,13 @@ export function mockApiPlugin() {
           return sendJson(res, 200, { message: 'Like removed' })
         }
 
+        // GET/POST /api/games/:id/comments/
         if (resource === 'comments') {
           if (method === 'GET') {
             return sendJson(res, 200, {
               game_id: game.game_id,
               total_comments: game.comments.length,
-              comments: game.comments
+              comments: game.comments,
             })
           }
           if (method === 'POST') {
@@ -179,7 +186,7 @@ export function mockApiPlugin() {
               user_id: null,
               text: text.trim(),
               created_at: now(),
-              updated_at: now()
+              updated_at: now(),
             }
             game.comments.push(comment)
             game.updated_at = now()
@@ -190,6 +197,6 @@ export function mockApiPlugin() {
 
         return sendNotFound(res, req.url)
       })
-    }
+    },
   }
 }
