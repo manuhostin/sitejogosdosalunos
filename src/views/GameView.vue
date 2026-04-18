@@ -7,19 +7,177 @@ const router = useRouter()
 
 const favoritos = ref([])
 
-onMounted(() => {
+const visualizacoes = ref(0)
+const curtidas = ref(0)
+const comentarios = ref([])
+const novoComentario = ref('')
+const abaAtiva = ref('visualizacoes')
+const jogoId = computed(() => parseInt(route.params.id))
+const curtido = ref(false)
+
+const API_BASE = '/api'
+
+const getLikedGamesStorage = () => {
+  try {
+    return JSON.parse(localStorage.getItem('likedGames') || '[]')
+  } catch {
+    return []
+  }
+}
+
+const setLikedGamesStorage = (likedGames) => {
+  localStorage.setItem('likedGames', JSON.stringify(likedGames))
+}
+
+const loadLikedState = () => {
+  const likedGames = getLikedGamesStorage()
+  curtido.value = likedGames.includes(jogoId.value)
+}
+
+const setLikedState = (isLiked) => {
+  const likedGames = getLikedGamesStorage()
+  const index = likedGames.indexOf(jogoId.value)
+
+  if (isLiked && index === -1) likedGames.push(jogoId.value)
+  if (!isLiked && index > -1) likedGames.splice(index, 1)
+
+  setLikedGamesStorage(likedGames)
+  curtido.value = isLiked
+}
+
+// Funções de API
+const fetchJogoData = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/games/${jogoId.value}/`)
+    if (response.ok) {
+      const data = await response.json()
+      visualizacoes.value = data.statistics?.views ?? data.views ?? 0
+      curtidas.value = data.statistics?.likes ?? data.likes ?? 0
+    }
+  } catch (error) {
+    console.error('Erro ao buscar dados do jogo:', error)
+  }
+}
+
+const createGameIfNeeded = async () => {
+  try {
+    await fetch(`${API_BASE}/games/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: jogoId.value })
+    })
+  } catch (error) {
+    console.error('Erro ao criar game no backend:', error)
+  }
+}
+
+const incrementView = async () => {
+  try {
+    await createGameIfNeeded()
+    const response = await fetch(`${API_BASE}/games/${jogoId.value}/views/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    if (response.ok) {
+      await fetchJogoData()
+    } else {
+      console.error('Falha ao registrar visualização:', response.status, await response.text())
+    }
+  } catch (error) {
+    console.error('Erro ao incrementar visualização:', error)
+  }
+}
+
+const toggleLike = async () => {
+  try {
+    await createGameIfNeeded()
+    const endpoint = curtido.value ? 'unlike' : 'like'
+    const method = curtido.value ? 'DELETE' : 'POST'
+
+    const response = await fetch(`${API_BASE}/games/${jogoId.value}/${endpoint}/`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+
+    if (response.ok) {
+      setLikedState(!curtido.value)
+      await fetchJogoData()
+    } else {
+      // Fallback: tenta endpoint de like antigo para manter compatibilidade
+      if (!curtido.value) {
+        const legacyResponse = await fetch(`${API_BASE}/games/${jogoId.value}/like/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        })
+
+        if (legacyResponse.ok) {
+          setLikedState(true)
+          await fetchJogoData()
+          return
+        }
+      }
+
+      console.error('Falha ao alternar curtida:', response.status, await response.text())
+    }
+  } catch (error) {
+    console.error('Erro ao alternar curtida:', error)
+  }
+}
+
+const fetchComentarios = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/games/${jogoId.value}/comments/`)
+    if (response.ok) {
+      const data = await response.json()
+      comentarios.value = Array.isArray(data) ? data : (data.comments || [])
+    }
+  } catch (error) {
+    console.error('Erro ao buscar comentários:', error)
+  }
+}
+
+const addComentario = async () => {
+  if (!novoComentario.value.trim()) return
+  try {
+    await createGameIfNeeded()
+    const response = await fetch(`${API_BASE}/games/${jogoId.value}/comments/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: novoComentario.value.trim() })
+    })
+    if (response.ok) {
+      novoComentario.value = ''
+      await fetchComentarios()
+    } else {
+      console.error('Falha ao adicionar comentário:', response.status, await response.text())
+    }
+  } catch (error) {
+    console.error('Erro ao adicionar comentário:', error)
+  }
+}
+
+onMounted(async () => {
   const stored = localStorage.getItem('favoritos')
   if (stored) {
     favoritos.value = JSON.parse(stored)
   }
 
   // Adicionar aos recentes
-  const id = parseInt(route.params.id)
   let recentes = JSON.parse(localStorage.getItem('recentes') || '[]')
-  recentes = recentes.filter(r => r !== id) // remover se já existe
-  recentes.unshift(id) // adicionar no início
-  recentes = recentes.slice(0, 10) // manter apenas os 10 mais recentes
+  recentes = recentes.filter(r => r !== jogoId.value)
+  recentes.unshift(jogoId.value)
+  recentes = recentes.slice(0, 10)
   localStorage.setItem('recentes', JSON.stringify(recentes))
+
+  // Garantir que o game exista no backend antes de usar as estatísticas
+  loadLikedState()
+  await createGameIfNeeded()
+  await incrementView()
+  await fetchJogoData()
+  await fetchComentarios()
 })
 
 const projetos = [
@@ -177,14 +335,21 @@ const isFavorito = computed(() => {
 })
 
 const toggleFavorito = () => {
-  const id = parseInt(route.params.id)
-  const index = favoritos.value.indexOf(id)
+  const index = favoritos.value.indexOf(jogoId.value)
   if (index > -1) {
     favoritos.value.splice(index, 1)
   } else {
-    favoritos.value.push(id)
+    favoritos.value.push(jogoId.value)
   }
   localStorage.setItem('favoritos', JSON.stringify(favoritos.value))
+}
+
+const toggleCurtida = async () => {
+  await toggleLike()
+}
+
+const adicionarComentario = async () => {
+  await addComentario()
 }
 
 const voltar = () => {
@@ -211,6 +376,32 @@ const voltar = () => {
       <p><strong>Categoria:</strong> {{ jogo.categoria }}</p>
       <iframe :src="jogo.link" width="800" height="600" frameborder="0" allowfullscreen></iframe>
       <br>
+      <div class="tabs">
+        <button @click="abaAtiva = 'visualizacoes'" :class="{ active: abaAtiva === 'visualizacoes' }">Visualizações</button>
+        <button @click="abaAtiva = 'curtidas'" :class="{ active: abaAtiva === 'curtidas' }">Curtidas</button>
+        <button @click="abaAtiva = 'comentarios'" :class="{ active: abaAtiva === 'comentarios' }">Comentários</button>
+      </div>
+      <div class="tab-content">
+        <div v-if="abaAtiva === 'visualizacoes'">
+          <p>Este jogo foi visualizado {{ visualizacoes }} vezes.</p>
+        </div>
+        <div v-if="abaAtiva === 'curtidas'">
+          <p>Curtidas: {{ curtidas }}</p>
+          <button @click="toggleCurtida" class="curtir-btn">{{ curtido ? 'Descurtir 👎' : 'Curtir 👍' }}</button>
+        </div>
+        <div v-if="abaAtiva === 'comentarios'">
+          <div class="comentarios">
+            <div v-for="comentario in comentarios" :key="comentario.id" class="comentario">
+              <p>{{ comentario.text }}</p>
+              <small>{{ new Date(comentario.created_at).toLocaleString() }}</small>
+            </div>
+          </div>
+          <div class="novo-comentario">
+            <textarea v-model="novoComentario" placeholder="Adicione um comentário..."></textarea>
+            <button @click="adicionarComentario" class="comentar-btn">Comentar</button>
+          </div>
+        </div>
+      </div>
       <p><strong>Instruções:</strong> {{ jogo.Instrucoes }}</p>
       <a :href="jogo.link" target="_blank" class="jogar-btn">Jogar em tela cheia 🎮</a>
     </div>
@@ -326,6 +517,99 @@ img {
 }
 
 .jogar-btn:hover {
+  background: #16a34a;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  background: #334155;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 5px;
+  font-weight: bold;
+}
+
+.tabs button:hover {
+  background: #475569;
+}
+
+.tabs button.active {
+  background: #22c55e;
+  color: black;
+}
+
+.tab-content {
+  margin: 20px 0;
+  padding: 20px;
+  background: #1e293b;
+  border-radius: 8px;
+}
+
+.curtir-btn {
+  padding: 10px 20px;
+  background: #22c55e;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.curtir-btn:hover {
+  background: #16a34a;
+}
+
+.comentarios {
+  margin-bottom: 20px;
+}
+
+.comentario {
+  background: #334155;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.comentario p {
+  margin: 0;
+}
+
+.comentario small {
+  color: #94a3b8;
+}
+
+.novo-comentario textarea {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #334155;
+  color: white;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.comentar-btn {
+  padding: 10px 20px;
+  background: #22c55e;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.comentar-btn:hover {
   background: #16a34a;
 }
 
