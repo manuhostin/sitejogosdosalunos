@@ -42,7 +42,7 @@ async function request(url, options = {}) {
       error.message.includes('NetworkError')
     )
     const message = isFetchConnectionError
-      ? `Não foi possível conectar ao backend em ${API_BASE}. Verifique se o backend está ativo e com CORS liberado para este frontend.`
+      ? 'Não foi possível conectar ao servidor agora. Tente novamente em instantes.'
       : error.message
     console.error('Erro de conexão com a API:', {
       url: `${API_BASE}${url}`,
