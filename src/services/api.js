@@ -3,9 +3,10 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api'
 async function request(url, options = {}) {
   const hasBody = options.body !== undefined && options.body !== null
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
-  const hasCustomContentType = Object.keys(options.headers || {}).some(
-    (header) => header.toLowerCase() === 'content-type',
+  const lowerCaseHeaderNames = new Set(
+    Object.keys(options.headers || {}).map((header) => header.toLowerCase()),
   )
+  const hasCustomContentType = lowerCaseHeaderNames.has('content-type')
   const headers = {
     Accept: 'application/json',
     ...options.headers,
