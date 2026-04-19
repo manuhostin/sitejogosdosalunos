@@ -28,7 +28,12 @@ async function request(url, options = {}) {
 
     return response.json()
   } catch (error) {
-    const message = error instanceof TypeError
+    const isFetchConnectionError = error instanceof TypeError && (
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('Load failed') ||
+      error.message.includes('NetworkError')
+    )
+    const message = isFetchConnectionError
       ? `Não foi possível conectar ao backend em ${API_BASE}. Verifique se o backend está ativo e com CORS liberado para este frontend.`
       : error.message
     console.error('Erro de conexão com a API:', {
