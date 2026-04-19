@@ -62,7 +62,7 @@ export const gamesApi = {
       })
     } catch (error) {
       // Game pode já existir, ignorar erro
-      console.warn('Não foi possível garantir game no backend:', error.message)
+      console.warn(`Não foi possível garantir game no backend (ID: ${gameId}):`, error.message)
     }
   },
 
