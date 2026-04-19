@@ -1,15 +1,55 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 async function request(url, options = {}) {
-  const response = await fetch(`${API_BASE}${url}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  })
-  if (!response.ok) {
-    const text = await response.text().catch(() => '')
-    throw new Error(`API ${response.status}: ${text}`)
+  const hasBody = options.body !== undefined && options.body !== null
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
+  const lowerCaseHeaderNames = new Set(
+    Object.keys(options.headers || {}).map((header) => header.toLowerCase()),
+  )
+  const hasCustomContentType = lowerCaseHeaderNames.has('content-type')
+  const headers = {
+    Accept: 'application/json',
+    ...options.headers,
   }
-  return response.json()
+  if (hasBody && !isFormData && !hasCustomContentType) {
+    headers['Content-Type'] = 'application/json'
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}${url}`, {
+      mode: 'cors',
+      headers,
+      ...options,
+    })
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '')
+      const message = `Falha na API (${response.status}): ${text || response.statusText}`
+      console.error('Erro de resposta da API:', {
+        url: `${API_BASE}${url}`,
+        status: response.status,
+        statusText: response.statusText,
+        body: text,
+      })
+      throw new Error(message)
+    }
+
+    return response.json()
+  } catch (error) {
+    const isFetchConnectionError = error instanceof TypeError && (
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('Load failed') ||
+      error.message.includes('NetworkError')
+    )
+    const message = isFetchConnectionError
+      ? 'Não foi possível conectar ao servidor agora. Tente novamente em instantes.'
+      : error.message
+    console.error('Erro de conexão com a API:', {
+      url: `${API_BASE}${url}`,
+      error,
+    })
+    throw new Error(message, { cause: error })
+  }
 }
 
 export const gamesApi = {
@@ -20,8 +60,9 @@ export const gamesApi = {
         method: 'POST',
         body: JSON.stringify({ game_id: gameId }),
       })
-    } catch {
+    } catch (error) {
       // Game pode já existir, ignorar erro
+      console.warn(`Não foi possível garantir game no backend (ID: ${gameId}):`, error.message)
     }
   },
 
