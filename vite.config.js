@@ -8,7 +8,10 @@ import { mockApiPlugin } from './mock-api.js'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
-  const apiTarget = env.VITE_API_TARGET || 'https://sitejumperbd.onrender.com'
+  const defaultApiTarget = mode === 'development'
+    ? 'http://localhost:8000'
+    : 'https://sitejumperbd.onrender.com'
+  const apiTarget = env.VITE_API_TARGET || defaultApiTarget
   const useMock = env.VITE_USE_MOCK === 'true'
 
   return {

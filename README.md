@@ -31,6 +31,21 @@ npm install
 npm run dev
 ```
 
+### Configuração de ambiente (.env)
+
+Copie o arquivo de exemplo e ajuste os valores conforme o ambiente:
+
+```sh
+cp .env.example .env.local
+```
+
+- Desenvolvimento local:
+  - `VITE_API_URL=/api`
+  - `VITE_API_TARGET=http://localhost:8000`
+- Produção (Vercel + Render):
+  - `VITE_API_URL=/api`
+  - `VITE_API_TARGET=https://sitejumperbd.onrender.com`
+
 ### Compile and Minify for Production
 
 ```sh
